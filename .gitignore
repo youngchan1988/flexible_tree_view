@@ -28,3 +28,4 @@
 .dart_tool/
 .packages
 build/
+pushall.sh
