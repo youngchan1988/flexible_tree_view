@@ -35,7 +35,7 @@ dependencies:
   cupertino_icons: ^1.0.2
 
   mock_data: ^2.0.0
-  tree_view:
+  flexible_tree_view:
     path: ../
 
 dev_dependencies:

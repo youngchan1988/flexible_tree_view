@@ -17,8 +17,8 @@ typedef WillReorder<T> = bool Function(
 typedef OnReorder<T> = void Function(
     TreeNode<T> orderNode, TreeNode<T> currentNode);
 
-class TreeView<T> extends StatefulWidget {
-  const TreeView(
+class FlexibleTreeView<T> extends StatefulWidget {
+  const FlexibleTreeView(
       {Key? key,
       required this.nodes,
       this.maxNodeWidth = 300,
@@ -46,10 +46,11 @@ class TreeView<T> extends StatefulWidget {
   final OnReorder<T>? onReorder;
 
   @override
-  _TreeViewState createState() => _TreeViewState<T>();
+  _FlexibleTreeViewState createState() => _FlexibleTreeViewState<T>();
 }
 
-class _TreeViewState<T> extends State<TreeView<T>> implements TreeObserver {
+class _FlexibleTreeViewState<T> extends State<FlexibleTreeView<T>>
+    implements TreeObserver {
   final List<TreeNode<T>> _listShowNodes = [];
   final _horizontalScrollController = ScrollController();
 
@@ -66,7 +67,7 @@ class _TreeViewState<T> extends State<TreeView<T>> implements TreeObserver {
   }
 
   @override
-  void didUpdateWidget(TreeView<T> oldWidget) {
+  void didUpdateWidget(FlexibleTreeView<T> oldWidget) {
     _updateShowNodes();
     super.didUpdateWidget(oldWidget);
   }

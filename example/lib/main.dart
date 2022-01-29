@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:mock_data/mock_data.dart';
-import 'package:tree_view/tree_view.dart';
+import 'package:flexible_tree_view/flexible_tree_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -103,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ],
               ),
               Expanded(
-                child: TreeView<NodeData>(
+                child: FlexibleTreeView<NodeData>(
                   nodes: _nodes,
                   showLines: _showLines,
                   nodeItemBuilder: (

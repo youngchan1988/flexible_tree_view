@@ -10,7 +10,7 @@
 
 ```yaml
 dependencies:
-    tree_view: ^0.0.1
+    flexible_tree_view: ^0.0.1
 ```
 
 ## Screen Shot
@@ -22,9 +22,9 @@ dependencies:
 ## Usage
 
 ```dart
-import 'package:tree_view/tree_view.dart';
+import 'package:flexible_tree_view/flexible_tree_view.dart';
 
-TreeView<String>(
+FlexibleTreeView<String>(
 	nodes: [
 		TreeNode<String>(
 			data: 'Cities', 
