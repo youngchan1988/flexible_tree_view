@@ -1,4 +1,4 @@
-![](https://tva1.sinaimg.cn/large/008i3skNgy1gyuj1fzhu2j30qs0atq33.jpg)
+![](https://tva1.sinaimg.cn/large/008i3skNgy1gyujo33a5sj30qs0atmxc.jpg)
 
 ## Features
 
