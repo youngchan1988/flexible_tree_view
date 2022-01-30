@@ -10,7 +10,7 @@
 
 ```yaml
 dependencies:
-    flexible_tree_view: ^0.0.1
+    flexible_tree_view: ^0.0.2
 ```
 
 ## Screen Shot
@@ -31,7 +31,7 @@ FlexibleTreeView<String>(
 			expanded: true, 
 			children: [
 				TreeNode<String>(data: 'Beijing'), 
-				TreeNode<Strnig>(data: 'Shanghai'),
+				TreeNode<String>(data: 'Shanghai'),
 				TreeNode<String>(data: 'Tokyo'),
 				TreeNode<String>(data: 'Paris')
 			]
@@ -42,7 +42,7 @@ FlexibleTreeView<String>(
 			padding: const EdgeInsets.symmetric(vertical: 8),
 			child: Row(
 				children: [
-				node.children.isNotEmpty
+				node.hasNodes
 					? IconButton(
 						iconSize: 12,
 						splashRadius: 16,
