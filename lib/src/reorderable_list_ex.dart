@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
-// Modify by the tree_view project authors.
+// Modify by the flexible_tree_view project authors.
 
 import 'dart:math';
 import 'dart:ui' show lerpDouble;

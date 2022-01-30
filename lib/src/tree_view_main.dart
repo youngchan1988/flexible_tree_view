@@ -1,4 +1,4 @@
-// Copyright (c) 2022, the tree_view project authors. Please see the AUTHORS file
+// Copyright (c) 2022, the flexible_tree_view project authors. Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
@@ -100,7 +100,7 @@ class _FlexibleTreeViewState<T> extends State<FlexibleTreeView<T>>
     source._treeObserver = this;
     buildNodeList.add(source);
 
-    if (source.children.isNotEmpty && source.expanded) {
+    if (source.hasNodes && source.expanded) {
       for (var child in source.children) {
         _buildShowNodes(child, buildNodeList);
       }
@@ -164,7 +164,7 @@ class _FlexibleTreeViewState<T> extends State<FlexibleTreeView<T>>
                       } else {
                         if (currentNode.parent != null) {
                           if (orderNode.parent != null) {
-                            orderNode._deleteSelf();
+                            orderNode._removeSelf();
                           } else if (widget.nodes.contains(orderNode)) {
                             widget.nodes.remove(orderNode);
                           }
@@ -173,14 +173,14 @@ class _FlexibleTreeViewState<T> extends State<FlexibleTreeView<T>>
                           var index = children.indexOf(currentNode);
                           if (orderUpper) {
                             currentNode.parent!
-                                ._insertNode(index + 1, orderNode);
+                                ._insertNodeAt(index + 1, orderNode);
                           } else {
-                            currentNode.parent!._insertNode(index, orderNode);
+                            currentNode.parent!._insertNodeAt(index, orderNode);
                           }
                           rebuild();
                         } else if (widget.nodes.contains(currentNode)) {
                           if (orderNode.parent != null) {
-                            orderNode._deleteSelf();
+                            orderNode._removeSelf();
                           }
                           var index = widget.nodes.indexOf(currentNode);
                           if (orderUpper) {
@@ -401,6 +401,10 @@ class TreeNode<T> with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get hasNodes => _children?.isNotEmpty == true;
+
+  int nodeIndexAt(TreeNode<T> node) => _children?.indexOf(node) ?? -1;
+
   void addNode(TreeNode<T> node) {
     _addNode(node);
     _treeObserver?.rebuild();
@@ -411,14 +415,38 @@ class TreeNode<T> with ChangeNotifier {
     children.add(node);
   }
 
-  void insertNode(int index, TreeNode<T> node) {
-    _insertNode(index, node);
+  void insertNodeAt(int index, TreeNode<T> node) {
+    _insertNodeAt(index, node);
     _treeObserver?.rebuild();
   }
 
-  void _insertNode(int index, TreeNode<T> node) {
+  void _insertNodeAt(int index, TreeNode<T> node) {
     node.parent = this;
     children.insert(index, node);
+  }
+
+  void addNodes(List<TreeNode<T>> nodes) {
+    _addNodes(nodes);
+    _treeObserver?.rebuild();
+  }
+
+  void _addNodes(List<TreeNode<T>> nodes) {
+    nodes.forEach((element) {
+      element.parent = this;
+    });
+    children.addAll(nodes);
+  }
+
+  void clearNodes() {
+    _clearNodes();
+    _treeObserver?.rebuild();
+  }
+
+  void _clearNodes() {
+    _children?.forEach((element) {
+      element.parent = null;
+    });
+    _children?.clear();
   }
 
   void removeNode(TreeNode<T> node) {
@@ -433,12 +461,68 @@ class TreeNode<T> with ChangeNotifier {
     children.remove(node);
   }
 
-  void deleteSelf() {
-    _deleteSelf();
+  void removeNodes(List<TreeNode<T>> nodes) {
+    _removeNodes(nodes);
+    _treeObserver?.rebuild();
+  }
+
+  void _removeNodes(List<TreeNode<T>> nodes) {
+    nodes.forEach((element) {
+      if (children.contains(element)) {
+        element.parent = null;
+        children.remove(element);
+      }
+    });
+  }
+
+  void removeNodeAt(int index) {
+    _removeNodeAt(index);
+    _treeObserver?.rebuild();
+  }
+
+  void _removeNodeAt(int index) {
+    if (index < children.length) {
+      children[index].parent = null;
+      children.removeAt(index);
+    }
+  }
+
+  void removeRange(int start, int end) {
+    _removeRange(start, end);
+    _treeObserver?.rebuild();
+  }
+
+  void _removeRange(int start, int end) {
+    assert(start >= 0 && start <= end && end < children.length);
+    for (var i = 0; i < children.length; i++) {
+      if (i >= start && i <= end) {
+        children[i].parent = null;
+      }
+    }
+    children.removeRange(start, end);
+  }
+
+  void removeWhere(bool Function(TreeNode<T>) where) {
+    _removeWhere(where);
+    _treeObserver?.rebuild();
+  }
+
+  void _removeWhere(bool Function(TreeNode<T>) where) {
+    _children?.removeWhere((node) {
+      var test = where(node);
+      if (test) {
+        node.parent = null;
+      }
+      return test;
+    });
+  }
+
+  void removeSelf() {
+    _removeSelf();
     notifyDataChanged();
   }
 
-  void _deleteSelf() {
+  void _removeSelf() {
     _children?.clear();
     _parent?.children.remove(this);
     _parent = null;

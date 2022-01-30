@@ -114,7 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Row(
                           children: [
-                            node.children.isNotEmpty
+                            node.hasNodes
                                 ? IconButton(
                                     iconSize: 12,
                                     splashRadius: 16,
