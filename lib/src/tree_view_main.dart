@@ -232,17 +232,10 @@ class TreeNodeWidget<T> extends StatefulWidget {
 
 class _TreeNodeWidgetState<T> extends State<TreeNodeWidget<T>>
     with SingleTickerProviderStateMixin {
-  late Animation<double> _fadeAnim;
-  late AnimationController _fadeIn;
   @override
   void initState() {
     widget.node.addListener(_onNodeChanged);
 
-    //Fade in
-    _fadeIn = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 200), value: 0);
-    _fadeAnim = CurveTween(curve: Curves.easeIn).animate(_fadeIn);
-    _fadeIn.forward(from: 0);
     super.initState();
   }
 
@@ -257,7 +250,6 @@ class _TreeNodeWidgetState<T> extends State<TreeNodeWidget<T>>
   @override
   void dispose() {
     widget.node.removeListener(_onNodeChanged);
-    _fadeIn.dispose();
     super.dispose();
   }
 
@@ -285,12 +277,9 @@ class _TreeNodeWidgetState<T> extends State<TreeNodeWidget<T>>
 
     return Stack(
       children: [
-        FadeTransition(
-          opacity: _fadeAnim,
-          child: Padding(
-            padding: EdgeInsets.only(left: widget.node.depth * 16.0),
-            child: widget.builder(context, widget.node),
-          ),
+        Padding(
+          padding: EdgeInsets.only(left: widget.node.depth * 16.0),
+          child: widget.builder(context, widget.node),
         ),
         if (widget.showLines &&
             widget.node.depth > 0 &&
@@ -323,7 +312,7 @@ class TreeNode<T> with ChangeNotifier {
     TreeNode<T>? parent,
     List<TreeNode<T>>? children,
   })  : _data = data,
-        key = key ?? Ulid().toCanonical() {
+        key = key ?? data.hashCode.toString() {
     if (parent != null) {
       _parent = parent;
       _depth = parent._depth + 1;

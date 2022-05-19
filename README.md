@@ -6,14 +6,14 @@
 - Show lines of parent -> child nodes;
 - High flexible to custom node widget
 
-## Getting started
+## Getting tarted
 
 ```yaml
 dependencies:
     flexible_tree_view: ^0.0.2
 ```
 
-## Screen Shot
+## Screen shot
 
 ![](https://tva1.sinaimg.cn/large/008i3skNgy1gyui2q97xmj312a0u0jsh.jpg)
 
