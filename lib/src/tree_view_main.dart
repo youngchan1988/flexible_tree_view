@@ -2,11 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-import 'dart:async';
 import 'package:flutter/material.dart';
-
 import 'reorderable_list_ex.dart';
-import 'package:ulid/ulid.dart';
 
 typedef NodeItemBuilder<T> = Widget Function(
     BuildContext context, TreeNode<T> node);
@@ -21,15 +18,19 @@ class FlexibleTreeView<T> extends StatefulWidget {
   const FlexibleTreeView(
       {Key? key,
       required this.nodes,
-      this.maxNodeWidth = 300,
+      this.nodeWidth = 300,
+      this.scrollable = true,
       required this.nodeItemBuilder,
       this.showLines = false,
       this.willRecorder,
       this.onReorder})
       : super(key: key);
 
-  /// The max width of node.
-  final double maxNodeWidth;
+  ///If [scrollable] is true. The [nodeWidth] will match parent width.
+  final double nodeWidth;
+
+  /// support horizontal scroll
+  final bool scrollable;
 
   final List<TreeNode<T>> nodes;
 
@@ -54,9 +55,6 @@ class _FlexibleTreeViewState<T> extends State<FlexibleTreeView<T>>
   final List<TreeNode<T>> _listShowNodes = [];
   final _horizontalScrollController = ScrollController();
 
-  final StreamController<List<TreeNode<T>>> _treeController =
-      StreamController();
-
   //Max depth is to dynamic evaluate the tree width.
   int _maxDepth = 0;
 
@@ -79,8 +77,9 @@ class _FlexibleTreeViewState<T> extends State<FlexibleTreeView<T>>
 
   @override
   void rebuild() {
-    _updateShowNodes();
-    _treeController.sink.add(_listShowNodes);
+    setState(() {
+      _updateShowNodes();
+    });
   }
 
   void _updateShowNodes() {
@@ -113,105 +112,99 @@ class _FlexibleTreeViewState<T> extends State<FlexibleTreeView<T>>
 
   @override
   Widget build(BuildContext context) {
-    return Scrollbar(
-      controller: _horizontalScrollController,
-      showTrackOnHover: true,
-      child: SingleChildScrollView(
-        controller: _horizontalScrollController,
-        scrollDirection: Axis.horizontal,
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            width: (_maxDepth * 16.0 + widget.maxNodeWidth),
-            padding: const EdgeInsets.only(bottom: 16),
-            alignment: Alignment.centerLeft,
-            child: StreamBuilder<List<TreeNode<T>>>(
-              initialData: _listShowNodes,
-              stream: _treeController.stream,
-              builder: (context, snapshot) {
-                assert(snapshot.data != null);
-                var showNodes = snapshot.data!;
-
-                return ReorderableListViewEx.builder(
-                  scrollController: ScrollController(),
-                  isItemReorderable: (index) {
-                    var node = showNodes[index];
-                    // log('Item reorderable: ${node.reorderable}');
-                    return node.reorderable;
-                  },
-                  onReorder: (oldIndex, newIndex) {
-                    var orderNode = showNodes[oldIndex];
-                    var orderUpper = false;
-                    if (oldIndex < newIndex) {
-                      newIndex -= 1;
-                      orderUpper = true;
-                    }
-                    var currentNode = showNodes[newIndex];
-                    var canReorder =
-                        widget.willRecorder?.call(orderNode, currentNode) ??
-                            false;
-                    if (canReorder) {
-                      if (orderNode.parent == currentNode.parent) {
-                        if (currentNode.parent != null) {
-                          var children = orderNode.parent!.children;
-                          children.manulSort(currentNode, orderNode);
-                          rebuild();
-                        } else if (widget.nodes.contains(orderNode) &&
-                            widget.nodes.contains(currentNode)) {
-                          widget.nodes.manulSort(currentNode, orderNode);
-                          rebuild();
-                        }
-                      } else {
-                        if (currentNode.parent != null) {
-                          if (orderNode.parent != null) {
-                            orderNode._removeSelf();
-                          } else if (widget.nodes.contains(orderNode)) {
-                            widget.nodes.remove(orderNode);
-                          }
-
-                          var children = currentNode.parent!.children;
-                          var index = children.indexOf(currentNode);
-                          if (orderUpper) {
-                            currentNode.parent!
-                                ._insertNodeAt(index + 1, orderNode);
-                          } else {
-                            currentNode.parent!._insertNodeAt(index, orderNode);
-                          }
-                          rebuild();
-                        } else if (widget.nodes.contains(currentNode)) {
-                          if (orderNode.parent != null) {
-                            orderNode._removeSelf();
-                          }
-                          var index = widget.nodes.indexOf(currentNode);
-                          if (orderUpper) {
-                            widget.nodes.insert(index + 1, orderNode);
-                          } else {
-                            widget.nodes.insert(index, orderNode);
-                          }
-                          rebuild();
-                        }
-                      }
-                      widget.onReorder?.call(orderNode, currentNode);
-                    }
-                  },
-                  itemCount: showNodes.length,
-                  itemBuilder: (context, index) {
-                    var node = showNodes[index];
-                    return TreeNodeWidget<T>(
-                      key: GlobalObjectKey(node.key),
-                      node: node,
-                      builder: widget.nodeItemBuilder,
-                      showLines: widget.showLines,
-                    );
-                  },
-                );
-              },
+    return widget.scrollable
+        ? Scrollbar(
+            controller: _horizontalScrollController,
+            trackVisibility: true,
+            child: SingleChildScrollView(
+              controller: _horizontalScrollController,
+              scrollDirection: Axis.horizontal,
+              child: _buildTreeList(),
             ),
+          )
+        : _buildTreeList();
+  }
+
+  Widget _buildTreeList() => Material(
+        color: Colors.transparent,
+        child: Container(
+          width: widget.scrollable
+              ? (_maxDepth * 16.0 + widget.nodeWidth)
+              : double.infinity,
+          alignment: Alignment.centerLeft,
+          child: ReorderableListViewEx.builder(
+            scrollController: ScrollController(),
+            isItemReorderable: (index) {
+              var node = _listShowNodes[index];
+              // log('Item reorderable: ${node.reorderable}');
+              return node.reorderable;
+            },
+            onReorder: (oldIndex, newIndex) {
+              var orderNode = _listShowNodes[oldIndex];
+              var orderUpper = false;
+              if (oldIndex < newIndex) {
+                newIndex -= 1;
+                orderUpper = true;
+              }
+              var currentNode = _listShowNodes[newIndex];
+              var canReorder =
+                  widget.willRecorder?.call(orderNode, currentNode) ?? false;
+              if (canReorder) {
+                if (orderNode.parent == currentNode.parent) {
+                  if (currentNode.parent != null) {
+                    var children = orderNode.parent!.children;
+                    children.manulSort(currentNode, orderNode);
+                    rebuild();
+                  } else if (widget.nodes.contains(orderNode) &&
+                      widget.nodes.contains(currentNode)) {
+                    widget.nodes.manulSort(currentNode, orderNode);
+                    rebuild();
+                  }
+                } else {
+                  if (currentNode.parent != null) {
+                    if (orderNode.parent != null) {
+                      orderNode._removeSelf();
+                    } else if (widget.nodes.contains(orderNode)) {
+                      widget.nodes.remove(orderNode);
+                    }
+
+                    var children = currentNode.parent!.children;
+                    var index = children.indexOf(currentNode);
+                    if (orderUpper) {
+                      currentNode.parent!._insertNodeAt(index + 1, orderNode);
+                    } else {
+                      currentNode.parent!._insertNodeAt(index, orderNode);
+                    }
+                    rebuild();
+                  } else if (widget.nodes.contains(currentNode)) {
+                    if (orderNode.parent != null) {
+                      orderNode._removeSelf();
+                    }
+                    var index = widget.nodes.indexOf(currentNode);
+                    if (orderUpper) {
+                      widget.nodes.insert(index + 1, orderNode);
+                    } else {
+                      widget.nodes.insert(index, orderNode);
+                    }
+                    rebuild();
+                  }
+                }
+                widget.onReorder?.call(orderNode, currentNode);
+              }
+            },
+            itemCount: _listShowNodes.length,
+            itemBuilder: (context, index) {
+              var node = _listShowNodes[index];
+              return TreeNodeWidget<T>(
+                key: GlobalObjectKey(node.key),
+                node: node,
+                builder: widget.nodeItemBuilder,
+                showLines: widget.showLines,
+              );
+            },
           ),
         ),
-      ),
-    );
-  }
+      );
 }
 
 class TreeNodeWidget<T> extends StatefulWidget {
@@ -320,8 +313,8 @@ class TreeNode<T> with ChangeNotifier {
     if (expanded != null) {
       _expanded = expanded;
     }
-    if (children?.isNotEmpty == true) {
-      children!.forEach((element) {
+    if (children != null) {
+      children.forEach((element) {
         element.parent = this;
       });
       _children = children;

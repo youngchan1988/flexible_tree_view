@@ -1,3 +1,8 @@
+## 0.0.3
+
+- Change argument `maxNodeWidth` to `nodeWidth`
+- Add new argument `scrollable`
+
 ## 0.0.2
 
 - Add `TreeNode.hasNodes` method
