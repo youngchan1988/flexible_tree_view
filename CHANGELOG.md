@@ -1,3 +1,7 @@
+## 0.0.4
+
+- Add parameter `originalNodeItemBuilder`. Used for custom node widget.
+
 ## 0.0.3
 
 - Change argument `maxNodeWidth` to `nodeWidth`

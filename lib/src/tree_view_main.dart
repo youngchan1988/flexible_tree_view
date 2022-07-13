@@ -20,8 +20,10 @@ class FlexibleTreeView<T> extends StatefulWidget {
       required this.nodes,
       this.nodeWidth = 300,
       this.scrollable = true,
-      required this.nodeItemBuilder,
+      this.nodeItemBuilder,
       this.showLines = false,
+      this.lineColor,
+      this.originalNodeItemBuilder,
       this.willRecorder,
       this.onReorder})
       : super(key: key);
@@ -35,10 +37,15 @@ class FlexibleTreeView<T> extends StatefulWidget {
   final List<TreeNode<T>> nodes;
 
   /// Node item widget.
-  final NodeItemBuilder<T> nodeItemBuilder;
+  final NodeItemBuilder<T>? nodeItemBuilder;
 
   /// Show the lines of parent -> child.
   final bool showLines;
+
+  final Color? lineColor;
+
+  /// Replace [RecommendNodeWidget]
+  final NodeItemBuilder<T>? originalNodeItemBuilder;
 
   /// Todo: support reorder in different nodes.
   final WillReorder<T>? willRecorder;
@@ -198,8 +205,14 @@ class _FlexibleTreeViewState<T> extends State<FlexibleTreeView<T>>
               return TreeNodeWidget<T>(
                 key: GlobalObjectKey(node.key),
                 node: node,
-                builder: widget.nodeItemBuilder,
-                showLines: widget.showLines,
+                builder: widget.originalNodeItemBuilder ??
+                    (context, node) => RecommendNodeWidget<T>(
+                          node: node,
+                          builder: widget.nodeItemBuilder,
+                          showLines: widget.showLines,
+                          lineColor: widget.lineColor,
+                          nodeWidth: widget.nodeWidth,
+                        ),
               );
             },
           ),
@@ -212,12 +225,10 @@ class TreeNodeWidget<T> extends StatefulWidget {
     Key? key,
     required this.node,
     required this.builder,
-    required this.showLines,
   }) : super(key: key);
 
   final TreeNode<T> node;
   final NodeItemBuilder<T> builder;
-  final bool showLines;
 
   @override
   _TreeNodeWidgetState<T> createState() => _TreeNodeWidgetState<T>();
@@ -248,9 +259,35 @@ class _TreeNodeWidgetState<T> extends State<TreeNodeWidget<T>>
 
   @override
   Widget build(BuildContext context) {
+    return widget.builder(context, widget.node);
+  }
+
+  void _onNodeChanged() {
+    setState(() {});
+  }
+}
+
+class RecommendNodeWidget<T> extends StatelessWidget {
+  const RecommendNodeWidget(
+      {Key? key,
+      required this.node,
+      this.builder,
+      this.nodeWidth,
+      this.showLines = false,
+      this.lineColor})
+      : super(key: key);
+
+  final TreeNode<T> node;
+  final NodeItemBuilder<T>? builder;
+  final double? nodeWidth;
+  final bool showLines;
+  final Color? lineColor;
+
+  @override
+  Widget build(BuildContext context) {
     var verticalLines = <Widget>[];
-    var parent = widget.node.parent;
-    while (widget.showLines && parent != null) {
+    var parent = node.parent;
+    while (showLines && parent != null) {
       //Only draw line when the children > 1
       if (parent.children.length > 1) {
         verticalLines.add(
@@ -258,8 +295,8 @@ class _TreeNodeWidgetState<T> extends State<TreeNodeWidget<T>>
             top: 0,
             bottom: 0,
             left: parent.depth * 16,
-            child: const VerticalDivider(
-              color: Colors.black54,
+            child: VerticalDivider(
+              color: lineColor ?? Colors.black54,
               width: 1,
             ),
           ),
@@ -271,27 +308,28 @@ class _TreeNodeWidgetState<T> extends State<TreeNodeWidget<T>>
     return Stack(
       children: [
         Padding(
-          padding: EdgeInsets.only(left: widget.node.depth * 16.0),
-          child: widget.builder(context, widget.node),
+          padding: EdgeInsets.only(left: node.depth * 16.0),
+          child: SizedBox(
+            width: nodeWidth,
+            child: builder?.call(context, node),
+          ),
         ),
-        if (widget.showLines &&
-            widget.node.depth > 0 &&
-            ((widget.node.parent?.children.length ?? 0) > 1))
+        if (showLines &&
+            node.depth > 0 &&
+            ((node.parent?.children.length ?? 0) > 1))
           Positioned(
-              top: 0,
-              bottom: 0,
-              left: (widget.node.depth - 1) * 16,
-              width: 16,
-              child: const Divider(
-                color: Colors.black54,
-              )),
+            top: 0,
+            bottom: 0,
+            left: (node.depth - 1) * 16,
+            width: 16,
+            child: Divider(
+              color: lineColor ?? Colors.black54,
+              thickness: 1,
+            ),
+          ),
         ...verticalLines
       ],
     );
-  }
-
-  void _onNodeChanged() {
-    setState(() {});
   }
 }
 
