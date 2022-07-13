@@ -23,6 +23,7 @@ class FlexibleTreeView<T> extends StatefulWidget {
       this.nodeItemBuilder,
       this.showLines = false,
       this.lineColor,
+      this.indent = 16,
       this.originalNodeItemBuilder,
       this.willRecorder,
       this.onReorder})
@@ -46,6 +47,8 @@ class FlexibleTreeView<T> extends StatefulWidget {
 
   /// Replace [RecommendNodeWidget]
   final NodeItemBuilder<T>? originalNodeItemBuilder;
+
+  final double indent;
 
   /// Todo: support reorder in different nodes.
   final WillReorder<T>? willRecorder;
@@ -136,7 +139,7 @@ class _FlexibleTreeViewState<T> extends State<FlexibleTreeView<T>>
         color: Colors.transparent,
         child: Container(
           width: widget.scrollable
-              ? (_maxDepth * 16.0 + widget.nodeWidth)
+              ? (_maxDepth * widget.indent + widget.nodeWidth)
               : double.infinity,
           alignment: Alignment.centerLeft,
           child: ReorderableListViewEx.builder(
@@ -212,6 +215,7 @@ class _FlexibleTreeViewState<T> extends State<FlexibleTreeView<T>>
                           showLines: widget.showLines,
                           lineColor: widget.lineColor,
                           nodeWidth: widget.nodeWidth,
+                          indent: widget.indent,
                         ),
               );
             },
@@ -268,20 +272,22 @@ class _TreeNodeWidgetState<T> extends State<TreeNodeWidget<T>>
 }
 
 class RecommendNodeWidget<T> extends StatelessWidget {
-  const RecommendNodeWidget(
-      {Key? key,
-      required this.node,
-      this.builder,
-      this.nodeWidth,
-      this.showLines = false,
-      this.lineColor})
-      : super(key: key);
+  const RecommendNodeWidget({
+    Key? key,
+    required this.node,
+    this.builder,
+    this.nodeWidth,
+    this.showLines = false,
+    this.lineColor,
+    this.indent = 16.0,
+  }) : super(key: key);
 
   final TreeNode<T> node;
   final NodeItemBuilder<T>? builder;
   final double? nodeWidth;
   final bool showLines;
   final Color? lineColor;
+  final double indent;
 
   @override
   Widget build(BuildContext context) {
@@ -294,7 +300,7 @@ class RecommendNodeWidget<T> extends StatelessWidget {
           Positioned(
             top: 0,
             bottom: 0,
-            left: parent.depth * 16,
+            left: parent.depth * indent,
             child: VerticalDivider(
               color: lineColor ?? Colors.black54,
               width: 1,
@@ -308,7 +314,7 @@ class RecommendNodeWidget<T> extends StatelessWidget {
     return Stack(
       children: [
         Padding(
-          padding: EdgeInsets.only(left: node.depth * 16.0),
+          padding: EdgeInsets.only(left: node.depth * indent),
           child: SizedBox(
             width: nodeWidth,
             child: builder?.call(context, node),
@@ -320,8 +326,8 @@ class RecommendNodeWidget<T> extends StatelessWidget {
           Positioned(
             top: 0,
             bottom: 0,
-            left: (node.depth - 1) * 16,
-            width: 16,
+            left: (node.depth - 1) * indent,
+            width: indent,
             child: Divider(
               color: lineColor ?? Colors.black54,
               thickness: 1,

@@ -10,7 +10,7 @@
 
 ```yaml
 dependencies:
-    flexible_tree_view: ^0.0.4
+    flexible_tree_view: ^0.0.5
 ```
 
 ## Screen shot

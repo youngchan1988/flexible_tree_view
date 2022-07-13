@@ -1,6 +1,7 @@
-## 0.0.4
+## 0.0.5
 
-- Add parameter `originalNodeItemBuilder`. Used for custom node widget.
+- Add argument `originalNodeItemBuilder`. Used for custom node widget.
+- Add argument `indent`.
 
 ## 0.0.3
 
