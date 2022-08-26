@@ -1,3 +1,7 @@
+## 0.0.6
+
+- Add argument `NodeItemBackground` .
+
 ## 0.0.5
 
 - Add argument `originalNodeItemBuilder`. Used for custom node widget.

@@ -8,6 +8,9 @@ import 'reorderable_list_ex.dart';
 typedef NodeItemBuilder<T> = Widget Function(
     BuildContext context, TreeNode<T> node);
 
+typedef NodeItemBackground<T> = Color? Function(
+    BuildContext context, TreeNode<T> node);
+
 typedef WillReorder<T> = bool Function(
     TreeNode<T> orderNode, TreeNode<T> currentNode);
 
@@ -21,6 +24,7 @@ class FlexibleTreeView<T> extends StatefulWidget {
       this.nodeWidth = 300,
       this.scrollable = true,
       this.nodeItemBuilder,
+      this.nodeItemBackground,
       this.showLines = false,
       this.lineColor,
       this.indent = 16,
@@ -39,6 +43,8 @@ class FlexibleTreeView<T> extends StatefulWidget {
 
   /// Node item widget.
   final NodeItemBuilder<T>? nodeItemBuilder;
+
+  final NodeItemBackground<T>? nodeItemBackground;
 
   /// Show the lines of parent -> child.
   final bool showLines;
@@ -208,15 +214,25 @@ class _FlexibleTreeViewState<T> extends State<FlexibleTreeView<T>>
               return TreeNodeWidget<T>(
                 key: GlobalObjectKey(node.key),
                 node: node,
-                builder: widget.originalNodeItemBuilder ??
-                    (context, node) => RecommendNodeWidget<T>(
-                          node: node,
-                          builder: widget.nodeItemBuilder,
-                          showLines: widget.showLines,
-                          lineColor: widget.lineColor,
-                          nodeWidth: widget.nodeWidth,
-                          indent: widget.indent,
+                builder: (context, node) => widget.originalNodeItemBuilder !=
+                        null
+                    ? DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: widget.nodeItemBackground?.call(context, node),
                         ),
+                        child: widget.originalNodeItemBuilder!(context, node),
+                      )
+                    : RecommendNodeWidget<T>(
+                        node: node,
+                        builder: widget.nodeItemBuilder,
+                        backgroundBuilder: widget.nodeItemBackground,
+                        showLines: widget.showLines,
+                        lineColor: widget.lineColor,
+                        nodeWidth: widget.scrollable
+                            ? widget.nodeWidth
+                            : double.infinity,
+                        indent: widget.indent,
+                      ),
               );
             },
           ),
@@ -276,6 +292,7 @@ class RecommendNodeWidget<T> extends StatelessWidget {
     Key? key,
     required this.node,
     this.builder,
+    this.backgroundBuilder,
     this.nodeWidth,
     this.showLines = false,
     this.lineColor,
@@ -284,6 +301,7 @@ class RecommendNodeWidget<T> extends StatelessWidget {
 
   final TreeNode<T> node;
   final NodeItemBuilder<T>? builder;
+  final NodeItemBackground<T>? backgroundBuilder;
   final double? nodeWidth;
   final bool showLines;
   final Color? lineColor;
@@ -311,30 +329,35 @@ class RecommendNodeWidget<T> extends StatelessWidget {
       parent = parent.parent;
     }
 
-    return Stack(
-      children: [
-        Padding(
-          padding: EdgeInsets.only(left: node.depth * indent),
-          child: SizedBox(
-            width: nodeWidth,
-            child: builder?.call(context, node),
-          ),
-        ),
-        if (showLines &&
-            node.depth > 0 &&
-            ((node.parent?.children.length ?? 0) > 1))
-          Positioned(
-            top: 0,
-            bottom: 0,
-            left: (node.depth - 1) * indent,
-            width: indent,
-            child: Divider(
-              color: lineColor ?? Colors.black54,
-              thickness: 1,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: backgroundBuilder?.call(context, node),
+      ),
+      child: Stack(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: node.depth * indent),
+            child: SizedBox(
+              width: nodeWidth,
+              child: builder?.call(context, node),
             ),
           ),
-        ...verticalLines
-      ],
+          if (showLines &&
+              node.depth > 0 &&
+              ((node.parent?.children.length ?? 0) > 1))
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: (node.depth - 1) * indent,
+              width: indent,
+              child: Divider(
+                color: lineColor ?? Colors.black54,
+                thickness: 1,
+              ),
+            ),
+          ...verticalLines
+        ],
+      ),
     );
   }
 }
